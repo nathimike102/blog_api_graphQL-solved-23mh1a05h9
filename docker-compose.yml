@@ -1,0 +1,66 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/blogdb
+      - JWT_SECRET=your-super-secret-key
+      - PORT=4000
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - graphql-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=blogdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./seeds:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d blogdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - graphql-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - graphql-network
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  graphql-network:
+    driver: bridge
