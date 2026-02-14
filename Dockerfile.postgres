@@ -1,0 +1,12 @@
+FROM postgres:14-alpine
+
+# Copy seed files
+COPY 01-schema.sql /docker-entrypoint-initdb.d/
+COPY 02-data.sql /docker-entrypoint-initdb.d/
+
+# Set default database
+ENV POSTGRES_DB=blog_db
+ENV POSTGRES_USER=blog_user
+ENV POSTGRES_PASSWORD=blog_password
+
+EXPOSE 5432

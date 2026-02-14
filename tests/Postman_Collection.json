@@ -1,0 +1,545 @@
+{
+  "info": {
+    "name": "GraphQL Blog API",
+    "description": "Complete test collection for GraphQL Blog API with DataLoader optimization, JWT auth, field-level authorization, and subscriptions",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health & Schema",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{BASE_URL}}/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Get GraphQL Schema SDL",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{BASE_URL}}/graphql/schema",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql", "schema"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Queries - Users",
+      "item": [
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  user(id: \"1\") {\n    id\n    username\n    email\n    role\n    createdAt\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Get All Users (Paginated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  users(first: 5) {\n    edges {\n      cursor\n      node {\n        id\n        username\n        email\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User (Protected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  me {\n    id\n    username\n    email\n    role\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Queries - Posts",
+      "item": [
+        {
+          "name": "Get Post by ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  post(id: \"1\") {\n    id\n    title\n    content\n    published\n    author {\n      id\n      username\n    }\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Get Published Posts (Paginated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  posts(first: 5, published: true) {\n    edges {\n      cursor\n      node {\n        id\n        title\n        published\n        author {\n          id\n          username\n        }\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "[N+1 TEST] Posts with Authors & Comments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  posts(first: 10) {\n    edges {\n      node {\n        id\n        title\n        author {\n          id\n          username\n        }\n        comments(first: 3) {\n          edges {\n            node {\n              id\n              content\n              author {\n                username\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\n# IMPORTANT: Monitor logs with: docker-compose logs app | grep SELECT\n# Expected: ~3 queries (posts + batched authors + batched comments)\n# Without DataLoader: 40+ queries (1 posts + 10 authors + 30 comment authors)"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authorization Tests",
+      "item": [
+        {
+          "name": "Field Auth - View Own Email (Should Work)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  user(id: \"1\") {\n    id\n    username\n    email\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            },
+            "description": "User1 viewing their own email (should return email)"
+          }
+        },
+        {
+          "name": "Field Auth - View Other User Email (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  user(id: \"2\") {\n    id\n    username\n    email\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            },
+            "description": "User1 viewing User2's email (should return null + error)"
+          }
+        },
+        {
+          "name": "Authentication - Query Without Token (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  me {\n    id\n    username\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mutations - Posts",
+      "item": [
+        {
+          "name": "Create Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation {\n  createPost(input: {\n    title: \"My New Post\"\n    content: \"This is test content for the new post\"\n    published: true\n  }) {\n    id\n    title\n    content\n    published\n    createdAt\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Update Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation {\n  updatePost(id: \"1\", input: {\n    title: \"Updated Title\"\n    published: true\n  }) {\n    id\n    title\n    updatedAt\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Delete Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation {\n  deletePost(id: \"1\")\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mutations - Comments",
+      "item": [
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{JWT_TOKEN}}"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation {\n  createComment(input: {\n    postId: \"1\"\n    content: \"Great post! Very informative.\"\n  }) {\n    id\n    content\n    author {\n      username\n    }\n    createdAt\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  login(username: \"user1\", password: \"password123\")\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation {\n  register(username: \"newuser\", email: \"newuser@example.com\", password: \"secure123\") {\n    id\n    username\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/graphql",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions (WebSocket)",
+      "item": [
+        {
+          "name": "Subscribe to Post Created",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "subscription {\n  postCreated {\n    id\n    title\n    author {\n      username\n    }\n    createdAt\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "ws://localhost:4000/graphql",
+              "protocol": "ws",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            },
+            "description": "WebSocket subscription for new posts. Use wscat to test:\nwscat -c ws://localhost:4000/graphql\nThen send: {\"type\":\"start\",\"payload\":{\"query\":\"subscription { postCreated { id title } }\"}}"
+          }
+        },
+        {
+          "name": "Subscribe to Comments on Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "subscription {\n  commentAdded(postId: \"1\") {\n    id\n    content\n    author {\n      username\n    }\n    createdAt\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "ws://localhost:4000/graphql",
+              "protocol": "ws",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["graphql"]
+            },
+            "description": "WebSocket subscription for new comments on specific post"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "JWT_TOKEN",
+      "value": "",
+      "type": "string",
+      "description": "JWT token from login. Update after running Login query."
+    }
+  ]
+}

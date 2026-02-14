@@ -1,0 +1,61 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: blog-db
+    env: docker
+    plan: free
+    region: oregon
+    buildCommand: "echo 'Database building...'"
+    dockerfilePath: ./Dockerfile.postgres
+    dockerContext: ./seeds
+    disk:
+      name: blog-db-data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 1
+    envVars:
+      - key: POSTGRES_USER
+        value: bloguser
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+      - key: POSTGRES_DB
+        value: blogdb
+
+  # Redis Instance
+  - type: redis
+    name: blog-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+
+  # GraphQL API Application
+  - type: web
+    name: blog-api
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: blog-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: blog-redis
+          type: redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRY
+        value: 1h
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: LOG_LEVEL
+        value: info
