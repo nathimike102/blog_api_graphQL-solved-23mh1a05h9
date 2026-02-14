@@ -10,6 +10,7 @@ services:
     name: blog-redis
     plan: free
     region: oregon
+    ipAllowList: []
 
   # GraphQL API Application
   - type: web
