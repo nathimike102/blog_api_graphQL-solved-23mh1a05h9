@@ -4,15 +4,12 @@ services:
     name: blog-db
     plan: free
     region: oregon
-    ipAllowList: []
 
   # Redis Instance (Render Managed)
   - type: redis
     name: blog-redis
     plan: free
     region: oregon
-    maxmemoryPolicy: noeviction
-    ipAllowList: []
 
   # GraphQL API Application
   - type: web
@@ -23,7 +20,6 @@ services:
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
-    connect: true
     envVars:
       - key: NODE_ENV
         value: production
