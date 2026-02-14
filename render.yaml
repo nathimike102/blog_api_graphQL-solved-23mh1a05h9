@@ -1,22 +1,12 @@
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database (Render Managed)
   - type: pserv
     name: blog-db
-    env: docker
     plan: free
     region: oregon
-    buildCommand: "echo 'Database building...'"
-    dockerfilePath: ./Dockerfile.postgres
-    dockerContext: ./seeds
-    envVars:
-      - key: POSTGRES_USER
-        value: bloguser
-      - key: POSTGRES_PASSWORD
-        generateValue: true
-      - key: POSTGRES_DB
-        value: blogdb
+    ipAllowList: []
 
-  # Redis Instance
+  # Redis Instance (Render Managed)
   - type: redis
     name: blog-redis
     plan: free
@@ -33,6 +23,7 @@ services:
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
+    connect: true
     envVars:
       - key: NODE_ENV
         value: production
