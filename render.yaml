@@ -8,10 +8,6 @@ services:
     buildCommand: "echo 'Database building...'"
     dockerfilePath: ./Dockerfile.postgres
     dockerContext: ./seeds
-    disk:
-      name: blog-db-data
-      mountPath: /var/lib/postgresql/data
-      sizeGB: 1
     envVars:
       - key: POSTGRES_USER
         value: bloguser
