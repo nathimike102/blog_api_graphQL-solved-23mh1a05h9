@@ -37,6 +37,7 @@ const schema = makeExecutableSchema({
 
 const server = new ApolloServer({
   schema,
+  cache: 'bounded',
   context: async ({ req, connection }) => {
     if (connection) {
       return {
