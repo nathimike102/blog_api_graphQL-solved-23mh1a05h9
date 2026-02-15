@@ -21,6 +21,10 @@ const PORT = process.env.PORT || 4000;
 app.use(cors({ credentials: true, origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
 
+app.get('/', (_req, res) => {
+  res.redirect(302, '/graphql');
+});
+
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
