@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { ApolloServer } = require('apollo-server-express');
+const { ApolloServerPluginLandingPageGraphQLPlayground } = require('apollo-server-core');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
 const { WebSocketServer } = require('ws');
 const { useServer } = require('graphql-ws/lib/use/ws');
@@ -42,6 +43,7 @@ const schema = makeExecutableSchema({
 const server = new ApolloServer({
   schema,
   cache: 'bounded',
+  plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
   context: async ({ req, connection }) => {
     if (connection) {
       return {
